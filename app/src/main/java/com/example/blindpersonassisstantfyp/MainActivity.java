@@ -14,6 +14,7 @@ import androidx.lifecycle.LifecycleOwner;
 
 import android.Manifest;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -38,7 +39,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Button bTakePicture;
     private ImageCapture imageCapture;
     private int REQUEST_CODE_PERMISSIONS = 1001;
-    private final String[] REQUIRED_PERMISSIONS = new String[]{"android.permission.CAMERA"};
+    private final String[] REQUIRED_PERMISSIONS = new String[]{"android.permission.CAMERA","android.permission.READ_EXTERNAL_STORAGE"};
 
 
     @Override
@@ -126,7 +127,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     @Override
                     public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
                         Toast.makeText(MainActivity.this,"Photo has been saved successfully", Toast.LENGTH_SHORT).show();
-                        Log.d("image_result", String.valueOf(outputFileResults));
+
+
+                        String imageURI = String.valueOf(outputFileResults.getSavedUri());
+                        String imagePath = outputFileResults.getSavedUri().getPath();
+
+                        Intent intent= new Intent(MainActivity.this,ResultActvity.class);
+                        intent.putExtra("image_uri",imageURI);
+                        intent.putExtra("image_path",imagePath);
+                        startActivity(intent);
                     }
 
                     @Override
