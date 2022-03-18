@@ -5,13 +5,18 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
+import org.w3c.dom.Text;
+
 import java.io.File;
+import java.util.Locale;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -25,11 +30,31 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class ResultActvity extends AppCompatActivity {
 
     ImageView resultImage;
+    TextView resultCaption;
+    private TextToSpeech mTTS;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_result_actvity);
         resultImage = findViewById(R.id.result_image);
+        resultCaption = findViewById(R.id.result_caption);
+
+        mTTS = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if(status == TextToSpeech.SUCCESS){
+                    int result = mTTS.setLanguage(Locale.US);
+
+                    if(result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED){
+                        Log.e("TTS","Language not supported");
+                    }
+                }
+                else{
+                    Log.e("TTS","Initialization failed");
+                }
+            }
+        });
+
 
         Intent intent = getIntent();
 
@@ -59,7 +84,9 @@ public class ResultActvity extends AppCompatActivity {
         call.enqueue(new Callback<ServerResponse>() {
             @Override
             public void onResponse(Call<ServerResponse> call, Response<ServerResponse> response) {
-                Toast.makeText(ResultActvity.this, response.body().message, Toast.LENGTH_LONG).show();
+                String caption = response.body().message;
+               resultCaption.setText(caption);
+               speak(caption);
             }
 
             @Override
@@ -70,5 +97,20 @@ public class ResultActvity extends AppCompatActivity {
         });
 
 
+    }
+
+    private void speak(String caption) {
+        mTTS.setSpeechRate(0.75f);
+        mTTS.speak(caption,TextToSpeech.QUEUE_FLUSH,null);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if(mTTS !=null){
+            mTTS.stop();
+            mTTS.shutdown();
+        }
+
+        super.onDestroy();
     }
 }
