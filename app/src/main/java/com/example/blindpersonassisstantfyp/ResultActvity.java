@@ -62,9 +62,9 @@ public class ResultActvity extends AppCompatActivity {
 
         Glide.with(this).load(imageUri).into(resultImage);
 
-        Retrofit retrofit = new Retrofit.Builder().baseUrl("http://192.168.1.226:5000/").addConverterFactory(GsonConverterFactory.create()).build();
+        Retrofit retrofit = new Retrofit.Builder().baseUrl("https://salik-ansari-image-caption.cognitiveservices.azure.com").addConverterFactory(GsonConverterFactory.create()).build();
 
-        CaptionService service = retrofit.create(CaptionService.class);
+        AzureService service = retrofit.create(AzureService.class);
 
         String imagePath = intent.getStringExtra("image_path");
 
@@ -79,18 +79,18 @@ public class ResultActvity extends AppCompatActivity {
 
         MultipartBody.Part body = MultipartBody.Part.createFormData("files[]",file.getName(),requestFile);
 
-        Call<ServerResponse> call =  service.getCaption(body);
+        Call<AzureServerResponse> call =  service.getCaption(body,"73b6c92da7434627852bc6d600097fa5");
 
-        call.enqueue(new Callback<ServerResponse>() {
+        call.enqueue(new Callback<AzureServerResponse>() {
             @Override
-            public void onResponse(Call<ServerResponse> call, Response<ServerResponse> response) {
-                String caption = response.body().message;
+            public void onResponse(Call<AzureServerResponse> call, Response<AzureServerResponse> response) {
+                String caption = response.body().getDescription().getCaptions().get(0).getText();
                resultCaption.setText(caption);
                speak(caption);
             }
 
             @Override
-            public void onFailure(Call<ServerResponse> call, Throwable t) {
+            public void onFailure(Call<AzureServerResponse> call, Throwable t) {
                 Toast.makeText(ResultActvity.this, t.getMessage(), Toast.LENGTH_LONG).show();
                 Log.d("server_error",t.getMessage());
             }
