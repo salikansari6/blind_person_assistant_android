@@ -118,7 +118,7 @@ public class ResultActvity extends AppCompatActivity {
     private File getBitmapFile(Bitmap reducedBitmap) {
         File file = new File( getFilesDir().getAbsolutePath(),"reduced_image");
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        reducedBitmap.compress(Bitmap.CompressFormat.JPEG,0,bos);
+        reducedBitmap.compress(Bitmap.CompressFormat.JPEG,40,bos);
         byte[] bitmapdata = bos.toByteArray();
 
         try {
