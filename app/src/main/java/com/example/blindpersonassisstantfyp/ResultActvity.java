@@ -3,8 +3,11 @@ package com.example.blindpersonassisstantfyp;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.widget.ImageView;
@@ -13,9 +16,11 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
-import org.w3c.dom.Text;
-
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Locale;
 
 import okhttp3.MediaType;
@@ -68,6 +73,11 @@ public class ResultActvity extends AppCompatActivity {
 
         String imagePath = intent.getStringExtra("image_path");
 
+        Log.d("image",imagePath);
+
+
+
+
         File file = null;
         try {
             file = FileUtils.getFileFromUri(ResultActvity.this, Uri.parse(imageUri));
@@ -75,9 +85,15 @@ public class ResultActvity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        RequestBody requestFile = RequestBody.create(MediaType.parse("multipart/form-data"),file);
+        Bitmap fullSizeBitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
 
-        MultipartBody.Part body = MultipartBody.Part.createFormData("files[]",file.getName(),requestFile);
+        Bitmap reducedBitmap = ImageResizer.reduceBitmapSize(fullSizeBitmap,240000);
+
+        File reducedFile =  getBitmapFile(reducedBitmap);
+
+        RequestBody requestFile = RequestBody.create(MediaType.parse("multipart/form-data"),reducedFile);
+
+        MultipartBody.Part body = MultipartBody.Part.createFormData("files[]",reducedFile.getName(),requestFile);
 
         Call<AzureServerResponse> call =  service.getCaption(body,"73b6c92da7434627852bc6d600097fa5");
 
@@ -97,6 +113,28 @@ public class ResultActvity extends AppCompatActivity {
         });
 
 
+    }
+
+    private File getBitmapFile(Bitmap reducedBitmap) {
+        File file = new File( getFilesDir().getAbsolutePath(),"reduced_image");
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        reducedBitmap.compress(Bitmap.CompressFormat.JPEG,0,bos);
+        byte[] bitmapdata = bos.toByteArray();
+
+        try {
+            file.createNewFile();
+            FileOutputStream fos = new FileOutputStream(file);
+            fos.write(bitmapdata);
+            fos.flush();
+            fos.close();
+            return file;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return file;
     }
 
     private void speak(String caption) {
